@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>flask-sse test</title>
+</head>
+<body>
+    <h1>flask-sse test</h1>
+</body>
+<script>
+    // 创建 EventSource 对象连接服务器
+    var source = new EventSource("/stream")
+    // 服务器发送信息到客户端时，会触发
+    source.addEventListener('sseTest', function(event){
+        var res_data = JSON.parse(event.data);
+        console.log(res_data);
+      }, false);
+    // 连接异常时会触发 error 事件并自动重连
+    source.addEventListener('error', function(event) {
+    if (event.target.readyState === EventSource.CLOSED) {
+          console.log('Disconnected');
+        } else if (event.target.readyState === EventSource.CONNECTING) {
+          console.log('Connecting...');
+        }
+    }, false);
+</script>
+</html>

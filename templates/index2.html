@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>stream test</title>
+</head>
+<body>
+    <h1>stream test</h1>
+</body>
+<script>
+fetch("/chat_stream", {method: 'POST', headers: {"Content-Type": "application/json"}, body:`
+    {
+        "messages": [
+            {
+                "role": "user",
+                "content": "当我问“你是谁”时，你回答：我是你的助手，主人。"
+            },
+            {
+                "role": "assistant",
+                "content": "好的，我是你的助手，主人。"
+            },
+            {
+                "role": "user",
+                "content": "你是谁啊？"
+            }
+        ],
+        "temperature": 1,
+        "top_p": 1,
+        "n": 1,
+        "stream": false,
+        "max_tokens": 250,
+        "presence_penalty": 0,
+        "frequency_penalty": 0
+    }
+    `}
+)
+  .then((response) => response.body)
+  .then((rb) => {
+      if(!rb) return;
+    const reader = rb.getReader();
+    return new ReadableStream({
+      start(controller) {
+        // The following function handles each data chunk
+        function push() {
+          // "done" is a Boolean and value a "Uint8Array"
+          reader.read().then(({ done, value }) => {
+            // If there is no more data to read
+            if (done) {
+              console.log("done", done);
+              controller.close();
+              return;
+            }
+            // Get the data and send it to the browser via the controller
+            controller.enqueue(value);
+            // Check chunks by logging to the console
+            console.log(done, value);
+            push();
+          });
+        }
+
+        push();
+      },
+    });
+  })
+  .then((stream) =>
+    // Respond with our stream
+    new Response(stream, { headers: { "Content-Type": "text/html" } }).text()
+  )
+  .then((result) => {
+    // Do things with result
+    console.log(result);
+  });
+</script>
+</html>
